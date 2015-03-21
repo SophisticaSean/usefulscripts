@@ -38,7 +38,7 @@ if section:
 	section = section.group().replace('sections/', '')
 
 if course or section:
-	if '192.168' in clipboardurl:
+	if ('192.168' in clipboardurl or 'localhost' in clipboardurl):
 		token = localtoken
 		tokenset = True
 	if '.instructure.com' in clipboardurl:
