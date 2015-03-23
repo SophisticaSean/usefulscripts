@@ -9,9 +9,9 @@
 import requests, json, uuid, time, os, datetime, xerox, re, sys
 from multiprocessing import Process, Lock
 
-prodtoken = "prod token goes here"
-localtoken = "local token goes here"
-portaltoken = 'portal token goes here'
+prodtoken = os.getenv('sandbox_token')
+localtoken = os.getenv('local_token')
+portaltoken = os.getenv('portal_token')
 tokenset = False
 
 clipboard = str(xerox.paste()).split()
@@ -30,78 +30,78 @@ course = re.search(r"courses/\d+", clipboardurl)
 section = re.search(r"sections/\d+", clipboardurl)
 
 if course:
-	account = re.search(r"\S*(?=/courses/\d+)", clipboardurl).group()
-	course = course.group().replace('courses/', '')
+    account = re.search(r"\S*(?=/courses/\d+)", clipboardurl).group()
+    course = course.group().replace('courses/', '')
 
 if section:
-	account = re.search(r"\S*(?=/sections/\d+)", clipboardurl).group()
-	section = section.group().replace('sections/', '')
+    account = re.search(r"\S*(?=/sections/\d+)", clipboardurl).group()
+    section = section.group().replace('sections/', '')
 
 if course or section:
-	if ('192.168' in clipboardurl or 'localhost' in clipboardurl):
-		token = localtoken
-		tokenset = True
-	if '.instructure.com' in clipboardurl:
-		token = prodtoken
-		tokenset = True
-	if '.amazon.com' in clipboardurl:
-		token = portaltoken
-		tokenset = True
-	if tokenset == False:
-		sys.exit()
+    if ('192.168' in clipboardurl or 'localhost' in clipboardurl):
+        token = localtoken
+        tokenset = True
+    if '.instructure.com' in clipboardurl:
+        token = prodtoken
+        tokenset = True
+    if 'amazon' in clipboardurl:
+        token = portaltoken
+        tokenset = True
+    if tokenset == False:
+        sys.exit()
 else:
-	print("I cannot parse that url. " + clipboardurl)
-	sys.exit()
+    print("I cannot parse that url. " + clipboardurl)
+    sys.exit()
 
 def rand(string_length=7):
-		random = str(uuid.uuid4())
-		random = random.upper()
-		random = random.replace("-","")
-		return random[0:string_length]
+        random = str(uuid.uuid4())
+        random = random.upper()
+        random = random.replace("-","")
+        return random[0:string_length]
 
 def userenroll(number, course, enrollment_type):
-	headers = {'Authorization': 'Bearer ' + token}
-	snum = str(number)
-	if section:
-		eurl = (account + "/api/v1/sections/" + section + "/enrollments")
-		newusername = enrollment_type + snum + '-' + section + '-' + uuu
-	else:
-		eurl = (account + "/api/v1/courses/" + course + "/enrollments")
-		newusername = enrollment_type + snum + '-' + course + '-' + uuu
-	newuser = {'user[name]': newusername, 'pseudonym[unique_id]': newusername, 'pseudonym[password]': password, 'pseudonym[sis_user_id]': newusername}
-	url = (account + "/api/v1/accounts/1/users")
-	headers = {'Authorization': 'Bearer ' + token}
-	u = requests.post(url, headers=headers, data=newuser)
-	if u.status_code == requests.codes.ok:
-		pass
-	else:
-		print(u.text)
-		u.raise_for_status
-	ujson = u.json()
-	userid = ujson[u"id"]
-	user = {'enrollment[user_id]': userid, 'enrollment[type]': enrollment_type + 'Enrollment', 'enrollment[enrollment_state]': 'active', 'enrollment[notify]': 'false'}
-	headers = {'Authorization': 'Bearer ' + token}
-	r = requests.post(eurl, headers=headers, data=user)
-	if r.status_code == requests.codes.ok:
-		pass
-	else:
-		print(r.text)
-		r.raise_for_status
+    headers = {'Authorization': 'Bearer ' + token}
+    snum = str(number)
+    if section:
+        eurl = (account + "/api/v1/sections/" + section + "/enrollments")
+        newusername = enrollment_type + snum + '-' + section + '-' + uuu
+    else:
+        eurl = (account + "/api/v1/courses/" + course + "/enrollments")
+        newusername = enrollment_type + snum + '-' + course + '-' + uuu
+    newuser = {'user[name]': newusername, 'pseudonym[unique_id]': newusername, 'pseudonym[password]': password, 'pseudonym[sis_user_id]': newusername}
+    url = (account + "/api/v1/accounts/1/users")
+    headers = {'Authorization': 'Bearer ' + token}
+    u = requests.post(url, headers=headers, data=newuser)
+    if u.status_code == requests.codes.ok:
+        pass
+    else:
+        print(u.text)
+        u.raise_for_status
+    ujson = u.json()
+    userid = ujson[u"id"]
+    user = {'enrollment[user_id]': userid, 'enrollment[type]': enrollment_type + 'Enrollment', 'enrollment[enrollment_state]': 'active', 'enrollment[notify]': 'false'}
+    headers = {'Authorization': 'Bearer ' + token}
+    r = requests.post(eurl, headers=headers, data=user)
+    if r.status_code == requests.codes.ok:
+        pass
+    else:
+        print(r.text)
+        r.raise_for_status
 
 def shred(amount, role, course, threads=10):
-	if amount > 0:
-		numlist = list(xrange(amount))
-		while len(numlist) > 0:
-			for item in numlist[:threads]:
-				p = Process(target=userenroll, args=(item, course, role))
-				p.start()
-				numlist.remove(item)
-			p.join()
-			if p.is_alive() == True:
-				while p.is_alive() == True:
-					time.sleep(.5)
-	else:
-		pass
+    if amount > 0:
+        numlist = list(xrange(amount))
+        while len(numlist) > 0:
+            for item in numlist[:threads]:
+                p = Process(target=userenroll, args=(item, course, role))
+                p.start()
+                numlist.remove(item)
+            p.join()
+            if p.is_alive() == True:
+                while p.is_alive() == True:
+                    time.sleep(.5)
+    else:
+        pass
 
 # main block of fun
 uuu = rand(7)
