@@ -89,6 +89,7 @@ def userenroll(number, course, enrollment_type):
         r.raise_for_status
 
 def shred(amount, role, course, threads=10):
+    print "Enrolling {} {}s".format(amount, role)
     if amount > 0:
         numlist = list(xrange(amount))
         while len(numlist) > 0:
@@ -106,7 +107,10 @@ def shred(amount, role, course, threads=10):
 # main block of fun
 uuu = rand(7)
 lock = Lock()
+start = datetime.datetime.now()
 shred(teacher_count, 'Teacher', course)
 shred(ta_count, 'Ta', course)
 shred(student_count, 'Student', course)
 shred(observer_count, 'Observer', course)
+end = datetime.datetime.now()
+print "That took: {} seconds".format(str(end-start))
