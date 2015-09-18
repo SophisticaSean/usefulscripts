@@ -1,23 +1,28 @@
 def rofl(model_number, frequency = 1)
-  #model_number = "06G-P4-4995-KR"
-  #model_number = "06G-P4-4998-KR"
   model_number = ARGV[0]
-  a = `wget -q http://www.nowinstock.net/computers/videocards/nvidia/gtx980ti/; sed -n '1,10000000000p' index.html > blarp.txt; ag "#{model_number}" blarp.txt; rm blarp.txt; rm index.html`
+  nowinstock_path = ARGV[1]
+  a = `wget -q -O temp.html http://www.nowinstock.net/#{nowinstock_path}; sed -n '1,10000000000p' temp.html > blarp.txt; ag "#{model_number}" blarp.txt; rm blarp.txt`
   blarp = []
-  #blarp << a.scan(/Amazon.*/)
-  #blarp << a.scan(/Newegg.*/)
-  blarp << a.scan(/(Amazon|Newegg|TigerDirect|NCIXUS)(?=\s\<\/a).*stockStatus"\>(.*)(?=\<\/td\>\<td)/).join(" ")
-  #blarp.each do |item|
-    #puts item
-    #temp = ""
-    #temp = temp + item.join().scan(/\w*/).join()
-    #return temp
-  #end
-  blarp.each { |test| puts test }
+  blarp << a.scan(/(Amazon|Newegg|TigerDirect|NCIXUS)(?=\s\<\/a).*stockStatus"\>(.*)(?=\<\/td\>\<td)/) #.join(" ")
+  new = []
+  if !blarp.first.empty?
+    blarp.first.each do |i|
+      a = i.join(" ")
+      new << a
+    end
+  end
+
+  new.each do |new_item|
+    if new_item.include? "In Stock"
+      p new_item
+    end
+  end
+
+  system('rm temp.html')
   sleep frequency.to_i
 end
 
-while true do
+10.times do
   rofl(ARGV[0], ARGV[1])
 end
 
